@@ -65,6 +65,7 @@ int main(void)
 
 void entry_no(FILE *fr)
 {
+    sl = 0;
     rewind(fr);
     while(!feof(fr))
     {
