@@ -19,6 +19,8 @@ void input(FILE *fa);
 void output(FILE *fr);
 void entry_no(FILE *fr);
 void search_by_roll(FILE *fr, char *a);
+void change(FILE *f);
+void del(FILE *f);
 
 int main(void)
 {
@@ -34,6 +36,7 @@ int main(void)
         printf("3. Enter 'Q' to quit\n");
         printf("4. Enter 'C' to change the data\n");
         printf("5. Enter 'S' to search\n");
+        printf("6. Enter 'D' to delete a data\n");
         printf("\n\nEnter your choice : ");
         char c;
         scanf("%c", &c);
@@ -56,7 +59,15 @@ int main(void)
         }
         else if (c == 'C')
         {
-            printf("\nYou have wanted to change a record\n\n");
+            FILE *f = fopen("student.dat", "rb+");
+            change(f);
+            fclose(f);
+        }
+        else if (c == 'D')
+        {
+            FILE *f = fopen("student.dat", "rb");
+            del(f);
+            fclose(f);
         }
         else if (c == 'S')
         {
@@ -192,4 +203,85 @@ void search_by_name(FILE *fr, char *name)
     rewind(fr);
     printf("No record of that name exists\n");
     return;
+}
+void change(FILE *f)
+{
+    student s;
+    int found = 0;
+    printf("Enter the name of the student whose details you want to change : ");
+    char name[100];
+    while (getchar() != '\n');
+    scanf("%[^\n]s", name);
+    while(fread(&s, sizeof(s), 1, f))
+    {
+        if(!strcmp(s.name, name))
+        {
+            found = 1;
+        }
+        if (found)
+        {
+            fseek(f, -sizeof(s), SEEK_CUR);
+            printf("Record found\n");
+            printf("Enter new name : ");
+            char name1[100];
+            while ((getchar() != '\n'));
+            scanf("%[^\n]s", name1);
+            if (name1[0] == '\0')
+            {
+                printf("\nNull character entered\n\n");
+                return;
+            }
+            printf("Enter new roll no. : ");
+            char roll1[13];
+            if (roll1[0] == '\0')
+            {
+                printf("\nNull character entered\n\n");
+                return;
+            }
+            while ((getchar() != '\n'));
+            scanf("%[^\n]s", roll1);
+            strcpy(s.name, name1);
+            strcpy(s.roll, roll1);
+            fwrite(&s, sizeof(s), 1, f);
+            printf("\nRecord updated successfully\n\n");
+            return;
+        }
+    }
+    printf("\nRecord not found\n\n");
+    return;
+}
+
+void del(FILE *f)
+{
+    student s;
+    printf("Enter the name of the record you want to delete : ");
+    char name[100];
+    while(getchar() != '\n');
+    scanf("%[^\n]s", name);
+    while(fread(&s, sizeof(s), 1, f))
+    {
+        if (!strcmp(s.name, name))
+        {
+            fseek(f, 0, SEEK_SET);
+            FILE *ftemp = fopen("temp.dat", "wb");
+            student stemp;
+            int i = 0;
+            while (fread(&stemp, sizeof(s), 1, f))
+            {
+                if (!strcmp(s.name, stemp.name)) continue;
+                else
+                {
+                    stemp.sl = ++i;
+                    fwrite(&stemp ,sizeof(stemp), 1, ftemp);
+                }
+            }
+            fclose(f);
+            fclose(ftemp);
+            remove("student.dat");
+            rename("temp.dat", "student.dat");
+            printf("Record deleted successfully\n");
+            return;
+        }
+    }
+    printf("Record not found\n");
 }
